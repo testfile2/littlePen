@@ -1,0 +1,11 @@
+--- MakefileBK	2017-09-18 09:34:45.963962955 +0200
++++ Makefile	2017-09-18 09:34:11.827965510 +0200
+@@ -1,7 +1,7 @@
+ VERSION = 4
+ PATCHLEVEL = 13
+ SUBLEVEL = 0
+-EXTRAVERSION =
++EXTRAVERSION = -thor_kernel
+ NAME = Fearless Coyote
+ 
+ # *DOCUMENTATION*
