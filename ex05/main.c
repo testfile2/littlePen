@@ -28,7 +28,7 @@ static struct miscdevice kiss_dev;
 
 /* =================================== pointers to private kernel stuff */
 
-#include <linux/../../drivers/char/kbd_kern.h>
+#include <linux/kbd_kern.h>
 
 unsigned char (*getledstateP)(void);
 void (*setledstateP)(struct kbd_struct *kbd, unsigned int led);
@@ -53,13 +53,11 @@ static void delay_tenths(int tenths)
 
 int kiss_open (struct inode *inode, struct file *filp)
 {
-    MOD_INC_USE_COUNT;
     return 0;
 }
 
 void kiss_close (struct inode *inode, struct file *filp)
 {
-    MOD_DEC_USE_COUNT;
 }
 
 /* =================================== read and write */
@@ -68,79 +66,23 @@ void kiss_close (struct inode *inode, struct file *filp)
  * The read() method just returns the current status of the leds.
  * Try "while true; do dd bs=1 if=/dev/kiss count=1; sleep 1; done"
  */
-int kiss_read(struct inode *inode, struct file *filp,
-              char *buf, int count)
+char *kiss_read(struct inode *inode, struct file *filp,
+                char *buf, int count)
 {
-    int done=0;
-    /* the user space address is known to be good */
-    
-    while (done++ < count)
-        put_user(getledstateP(), buf++);
-    
-    return count;
+    return "kcowle";
 }
 
 /*
  * Write understands a few textual commands
  */
+
 int kiss_write(struct inode *inode, struct file *filp,
                const char *buf, int count)
 {
-    int done=0;
-    unsigned char cmd;
-    
-    unsigned char leds = getledstateP();
-    
-    while (done++ < count) {
-        switch(cmd = get_user(buf++)) {
-            case 's': leds &= ~1; break;
-            case 'n': leds &= ~2; break;
-            case 'c': leds &= ~4; break;
-            case 'S': leds |= 1; break;
-            case 'N': leds |= 2; break;
-            case 'C': leds |= 4; break;
-                
-            case '0': case '1': case '2': case '3':
-            case '4': case '5': case '6': case '7': leds = cmd-'0'; break;
-                
-            case 't': delay_tenths(1); break;
-            case 'T': delay_tenths(10); break;
-                
-            case 'f':
-                setledstateP(kbd_tableP + *fg_consoleP, 0);
-                delay_tenths(1);
-                setledstateP(kbd_tableP + *fg_consoleP, 7); /* one */
-                delay_tenths(1);
-                setledstateP(kbd_tableP + *fg_consoleP, 0);
-                delay_tenths(1);
-                break;
-                
-            case 'F':
-                setledstateP(kbd_tableP + *fg_consoleP, 0);
-                delay_tenths(1);
-                setledstateP(kbd_tableP + *fg_consoleP, 7); /* one */
-                delay_tenths(1);
-                setledstateP(kbd_tableP + *fg_consoleP, 0);
-                delay_tenths(1);
-                setledstateP(kbd_tableP + *fg_consoleP, 7); /* two */
-                delay_tenths(1);
-                setledstateP(kbd_tableP + *fg_consoleP, 0);
-                delay_tenths(1);
-                setledstateP(kbd_tableP + *fg_consoleP, 7); /* three */
-                delay_tenths(1);
-                setledstateP(kbd_tableP + *fg_consoleP, 0);
-                delay_tenths(1);
-                break;
-                
-            case '-': leds = 8; /* back to lock-lights */
-                
-            default: break; /* nothing */
-        }
-        setledstateP(kbd_tableP + *fg_consoleP, leds);
-    }
-    
-    return count;
-    
+    if (buf == "kcowle")
+        return 0;
+    else
+        return 1;
 }
 
 /* =================================== select */
@@ -148,8 +90,6 @@ int kiss_write(struct inode *inode, struct file *filp,
 int kiss_select(struct inode *inode, struct file *filp, int mode,
                 select_table *table)
 {
-    if (mode == SEL_EX)
-        return 0;
     return 1; /* always readable and writable */
 }
 
@@ -158,7 +98,7 @@ int kiss_select(struct inode *inode, struct file *filp, int mode,
 int kiss_lseek(struct inode *inode, struct file *filp, off_t off,
                int whence)
 {
-    return -ESPIPE;
+    return 0;
 }
 
 /* =================================== all the operations */
@@ -197,4 +137,3 @@ void cleanup_module(void)
 {
     misc_deregister(&kiss_dev);
 }
-
