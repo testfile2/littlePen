@@ -2,37 +2,66 @@
 #include <linux/fs.h>
 #include <linux/kernel.h>
 #include <linux/module.h>
+#include <linux/string.h>
+#include <linux/fs.h>
+#include <linux/uaccess.h>
 
 static int sample_open(struct inode *inode, struct file *file)
 {
-    pr_info("I have been awoken\n");
-    return 0;
+        return 0;
 }
 
 static int sample_close(struct inode *inodep, struct file *filp)
 {
-    pr_info("Sleepy time\n");
-    return 0;
+   	return 0;
 }
 
-static ssize_t sample_write(struct file *file, const char __user *buf,
+static ssize_t sample_write(struct file *file, const char *buf,
                             size_t len, loff_t *ppos)
 {
-    pr_info("Yummy - I just ate %d bytes\n", len);
-    return len; /* But we don't actually do anything with the data */
+	if (strncmp(buf, "kcowle", 6) == 0)
+	{
+		return 6;
+	}
+	else
+	{
+		return -1;
+	}
+	return -2;
+}
+
+static ssize_t main_read(struct file *flip,
+			char *buf, size_t count, loff_t *offset)
+{
+	char *login = "kcowle";
+	int index = 0;
+	
+	if (buf[0] == 'k')
+	{
+		put_user('\0', buf);
+		return 0;
+	}
+	while (count && (login[index] != 0))
+	{
+		put_user(login[index], buf++);
+		count--;
+		index++;
+	}
+	put_user('\0', buf);
+	return 6;
 }
 
 static const struct file_operations sample_fops = {
-    .owner			= THIS_MODULE,
+    .read			= main_read,
     .write			= sample_write,
     .open			= sample_open,
-    .release		= sample_close,
-    .llseek 		= no_llseek,
+    .release			= sample_close,
+    .llseek 			= no_llseek,
 };
 
 struct miscdevice sample_device = {
     .minor = MISC_DYNAMIC_MINOR,
-    .name = "simple_misc",
+    .name = "misc char device driver",
     .fops = &sample_fops,
 };
 
@@ -42,23 +71,20 @@ static int __init misc_init(void)
     
     error = misc_register(&sample_device);
     if (error) {
-        pr_err("can't misc_register :(\n");
         return error;
     }
     
-    pr_info("I'm in\n");
     return 0;
 }
 
 static void __exit misc_exit(void)
 {
     misc_deregister(&sample_device);
-    pr_info("I'm out\n");
 }
 
 module_init(misc_init)
 module_exit(misc_exit)
 
-MODULE_DESCRIPTION("Simple Misc Driver");
-MODULE_AUTHOR("Nick Glynn <n.s.glynn@gmail.com>");
+MODULE_DESCRIPTION("Misc device driver");
+MODULE_AUTHOR("Kcowle");
 MODULE_LICENSE("GPL");
