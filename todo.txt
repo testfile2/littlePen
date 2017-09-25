@@ -1,0 +1,3 @@
+ex04 fuk
+ex06 kernel boot
+

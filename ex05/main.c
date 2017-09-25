@@ -19,15 +19,23 @@ static int sample_close(struct inode *inodep, struct file *filp)
 static ssize_t sample_write(struct file *file, const char *buf,
                             size_t len, loff_t *ppos)
 {
-	if (strncmp(buf, "kcowle", 6) == 0)
+
+	char msg[len];
+	size_t cmp;
+
+	copy_from_user(msg, buf, len);
+	cmp = strncmp(buf, "kcowle", 3);
+	if (cmp != 0)
 	{
-		return 6;
+		printk(KERN_DEBUG "Failed, returning-EINVAL\n");
+		return -EINVAL;
 	}
 	else
 	{
-		return -1;
+		printk(KERN_DEBUG "Pass Returning len\n");
+		return len;
 	}
-	return -2;
+	return -EINVAL;
 }
 
 static ssize_t main_read(struct file *flip,
@@ -48,7 +56,7 @@ static ssize_t main_read(struct file *flip,
 		index++;
 	}
 	put_user('\0', buf);
-	return 6;
+	return 7;
 }
 
 static const struct file_operations sample_fops = {
