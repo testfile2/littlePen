@@ -33,22 +33,22 @@ static int __init myfd_init(void)
 {
   if (misc_register(&myfd_device))
     printk(KERN_ERR "Unable register misc device");
+  tmp = kmalloc(sizeof(char) * PAGE_SIZE, GFP_KERNEL);
 	return 0;
 }
 
 static void __exit myfd_cleanup(void)
 {
+	kfree(tmp);
 	misc_deregister(&myfd_device);
 }
 
 ssize_t myfd_read(struct file *fp, char __user *user, size_t size, loff_t *offs)
 {
 	size_t t, i;
-	char *tmp2;
 
-	tmp2 = kmalloc(sizeof(char) * PAGE_SIZE * 2, GFP_KERNEL);
-	tmp = tmp2;
-	for (t = strlen(str) - 1, i = 0; t != -1; t--, i++) {
+	for (t = strlen(str) - 1, i = 0; t > -1; t--, i++)
+	{
 		tmp[i] = str[t];
 	}
 	tmp[i] = 0x0;
@@ -59,7 +59,7 @@ ssize_t myfd_write(struct file *fp, const char __user *user, size_t size, loff_t
 {
 	ssize_t res;
 	res = 0;
-	res = simple_write_to_buffer(str, size, offs, user, size) + 1;
+	res = simple_write_to_buffer(str, size, offs, user, size);
 	str[size + 1] = 0x0;
 	return res;
 }
