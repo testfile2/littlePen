@@ -1,32 +1,31 @@
-#include <linux/miscdevice.h>
-#include <linux/fs.h>
-#include <linux/kernel.h>
 #include <linux/module.h>
-#include <linux/string.h>
+#include <linux/kernel.h>
 #include <linux/fs.h>
+#include <linux/init.h>
+#include <linux/string.h>
 #include <linux/uaccess.h>
 #include <linux/debugfs.h>
 #include <linux/timer.h>
+#include <linux/mutex.h>
 
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("Kcowle");
+MODULE_DESCRIPTION("Fortytwo module.");
 
-#define BUF_SIZE 4096
-static char foo_buf[BUF_SIZE];
+static struct dentry *fortytwo_dir;
+static DEFINE_MUTEX(cache_lock);
+char str[4096];
 
-
-static struct dentry *my_debugfs_root;
-
-static int sample_open(struct inode *inode, struct file *file)
-{
-        return 0;
+static int id_open(struct inode *inode, struct file *file) {
+	return 0;
 }
 
-static int sample_close(struct inode *inodep, struct file *filp)
-{
-   	return 0;
+static int id_close(struct inode *inodep, struct file *filp) {
+	return 0;
 }
 
-static ssize_t sample_write(struct file *file, const char *buf,
-                            size_t len, loff_t *ppos)
+static ssize_t id_write(struct file *file, const char __user *buf,
+			size_t len, loff_t *pppos)
 {
 
 	char msg[len];
@@ -47,10 +46,9 @@ static ssize_t sample_write(struct file *file, const char *buf,
 	return -EINVAL;
 }
 
-static ssize_t main_read(struct file *flip,
-			char *buf, size_t count, loff_t *offset)
+static ssize_t id_read(struct file *filep, char *buf, size_t len, loff_t *offset)
 {
-	char *login = "kcowle";
+    char *login = "kcowle";
 	int index = 0;
 
 	if (buf[0] == 'k')
@@ -68,70 +66,71 @@ static ssize_t main_read(struct file *flip,
 	return 7;
 }
 
-static const struct file_operations sample_fops = {
-    .read			= main_read,
-    .write			= sample_write,
-    .open			= sample_open,
-    .release			= sample_close,
-    .llseek 			= no_llseek,
+static const struct file_operations id_fops = {
+	.owner	  =  THIS_MODULE,
+	.open     =  id_open,
+	.write    =  id_write,
+	.read     =  id_read,
+	.release  =  id_close,
+	.llseek   =  no_llseek,
 };
 
-static ssize_t jiffy_read(struct file *flip,
-			char *buf, size_t count, loff_t *offset)
+static ssize_t jiffies_read(struct file *filep, char *buf, size_t len, loff_t *offset)
 {
-    char jiff[10];
-    sprintf(jiff, "%ul", jiffies);
-    return simple_read_from_buffer(buf, count, offset, jiff, 10);
+	char jif_char[10];
+	sprintf(jif_char, "%ld", jiffies);
+	return simple_read_from_buffer(buf, len, offset, jif_char, 10);
 }
 
-static const struct file_operations jiffie_fops = {
-    .read		 	    = jiffy_read,
+static const struct file_operations jiffies_fops = {
+	.read     =  jiffies_read,
 };
 
-static ssize_t foo_read(struct file *flip,
-			char *buf, size_t count, loff_t *offset)
-{
 
+static ssize_t foo_write(struct file *file, const char __user *buf,
+			 size_t len, loff_t *offset)
+{
+	ssize_t res = 0;
+	mutex_lock(&cache_lock);
+	memset(str, 0, strlen(str));
+	res = simple_write_to_buffer(str, 4096, offset, buf, len);
+	mutex_unlock(&cache_lock);
+	return res;
 }
 
-static ssize_t foo_write(struct file *file, const char *buf,
-                            size_t len, loff_t *ppos)
+static ssize_t foo_read(struct file *filep, char *buf, size_t len, loff_t *offset)
 {
-    size_t ret;
-
-    if (*ppos > BUF_SIZE)
-        return -EINVAL;
-    ret = simple_write_to_buffer(foo_buf, sizeof(foo_buf), ppos, buf, len);
-    if (ret < 0)
-        return ret;
-    foo_buf[ret] = '\0';
-
-    return ret;
+	ssize_t ret = 0;
+	mutex_lock(&cache_lock);
+	ret = simple_read_from_buffer(buf, len, offset, str, strlen(str));
+	mutex_unlock(&cache_lock);
+	return ret;
 }
 
 static const struct file_operations foo_fops = {
-    .read		 	    = foo_read,
-    .write              = foo_write,
+	.write    =  foo_write,
+	.read     =  foo_read,
 };
 
-static int __init misc_init(void)
+static int __init hello_init(void)
 {
-	my_debugfs_root = debugfs_create_dir("fortytwo", NULL);
-	debugfs_create_file("id", 0666, my_debugfs_root, NULL, &sample_fops);
-    debugfs_create_file("jiffies", 0644, my_debugfs_root, NULL, &jiffie_fops);
+	fortytwo_dir = debugfs_create_dir("fortytwo", NULL);
+	if (!fortytwo_dir) {
+		printk(KERN_INFO "Failed to create dir.\n");
+		return 0;
+	}
 
+	debugfs_create_file("id", 0666, fortytwo_dir, NULL, &id_fops);
+	debugfs_create_file("jiffies", 0444, fortytwo_dir, NULL, &jiffies_fops);
+	debugfs_create_file("foo", 0644, fortytwo_dir, NULL, &foo_fops);
 	return 0;
 }
 
-static void __exit misc_exit(void)
+static void __exit hello_cleanup(void)
 {
-	debugfs_remove_recursive(my_debugfs_root);
-	debugfs_remove(my_debugfs_root);
+	debugfs_remove_recursive(fortytwo_dir);
+	debugfs_remove(fortytwo_dir);
 }
 
-module_init(misc_init)
-module_exit(misc_exit)
-
-MODULE_DESCRIPTION("Misc device driver");
-MODULE_AUTHOR("Kcowle");
-MODULE_LICENSE("GPL");
+module_init(hello_init);
+module_exit(hello_cleanup);
