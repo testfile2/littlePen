@@ -11,7 +11,9 @@ MODULE_DESCRIPTION("Hello World for wethinkcode");
 
 
 static struct usb_device_id usb_table [] = {
-	{ USB_DEVICE(0x258a, 0x0001)},
+	        { USB_INTERFACE_INFO(USB_INTERFACE_CLASS_HID,
+		USB_INTERFACE_SUBCLASS_BOOT,
+		USB_INTERFACE_PROTOCOL_KEYBOARD) },	
 	{ }
 };
 

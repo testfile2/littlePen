@@ -1,0 +1,20 @@
+[    7.096019] IPv6: ADDRCONF(NETDEV_UP): enp0s3: link is not ready
+[    7.097800] IPv6: ADDRCONF(NETDEV_UP): enp0s3: link is not ready
+[    7.106158] e1000: enp0s3 NIC Link is Up 1000 Mbps Full Duplex, Flow Control: RX
+[    7.106421] IPv6: ADDRCONF(NETDEV_CHANGE): enp0s3: link becomes ready
+[    8.429695] floppy0: no floppy controllers found
+[  154.730964] main: loading out-of-tree module taints kernel.
+[  154.730985] main: module verification failed: signature and/or required key missing - tainting kernel
+[  154.731528] usbcore: registered new interface driver Universal USB keyboard Driver
+[  154.731528] Successfully loaded USB driver.
+[  156.562585] Hello World!
+[  164.150379] usb 1-2: new full-speed USB device number 3 using ohci-pci
+[  164.432243] usb 1-2: New USB device found, idVendor=258a, idProduct=0001
+[  164.432245] usb 1-2: New USB device strings: Mfr=1, Product=2, SerialNumber=0
+[  164.432246] usb 1-2: Product: USB KEYBOARD
+[  164.432258] usb 1-2: Manufacturer: SINO WEALTH
+[  164.446722] input: SINO WEALTH USB KEYBOARD as /devices/pci0000:00/0000:00:06.0/usb1/1-2/1-2:1.0/0003:258A:0001.0002/input/input8
+[  164.506499] hid-generic 0003:258A:0001.0002: input,hidraw1: USB HID v1.10 Keyboard [SINO WEALTH USB KEYBOARD] on usb-0000:00:06.0-2/input0
+[  164.535649] input: SINO WEALTH USB KEYBOARD as /devices/pci0000:00/0000:00:06.0/usb1/1-2/1-2:1.1/0003:258A:0001.0003/input/input9
+[  164.597359] hid-generic 0003:258A:0001.0003: input,hiddev0,hidraw2: USB HID v1.10 Device [SINO WEALTH USB KEYBOARD] on usb-0000:00:06.0-2/input1
+[  198.394364] usb 1-2: USB disconnect, device number 3

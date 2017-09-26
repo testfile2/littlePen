@@ -1,1 +1,0 @@
-cmd_/home/lfs/LittlePen/ex04/main.ko := ld -r -m elf_x86_64 -T ./scripts/module-common.lds --build-id  -o /home/lfs/LittlePen/ex04/main.ko /home/lfs/LittlePen/ex04/main.o /home/lfs/LittlePen/ex04/main.mod.o ;  true
