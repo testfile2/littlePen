@@ -30,8 +30,9 @@ static ssize_t id_write(struct file *file, const char __user *buf,
 
 	char msg[len];
 	size_t cmp;
+	int temp;
 
-	copy_from_user(msg, buf, len);
+	temp = copy_from_user(msg, buf, len);
 	cmp = strncmp(buf, "kcowle", 3);
 	if (cmp != 0)
 	{
@@ -46,7 +47,7 @@ static ssize_t id_write(struct file *file, const char __user *buf,
 	return -EINVAL;
 }
 
-static ssize_t id_read(struct file *filep, char *buf, size_t len, loff_t *offset)
+static ssize_t id_read(struct file *filep, char *buf, size_t count, loff_t *offset)
 {
     char *login = "kcowle";
 	int index = 0;
