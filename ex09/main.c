@@ -1,3 +1,4 @@
+
 #include <linux/nsproxy.h>
 #include <linux/fs.h>
 #include <linux/kernel.h>
@@ -8,57 +9,55 @@
 #include <linux/uaccess.h>
 #include <linux/dcache.h>
 #include <linux/init.h>
-#include <linux/mount.h>
 #include <linux/path.h>
 #include <linux/namei.h>
 #include <linux/string.h>
 #include <linux/seq_file.h>
 #include <linux/mnt_namespace.h>
 #include <linux/fs_struct.h>
+#include <linux/proc_fs.h>
+#include <linux/mount.h>
+#include <linux/wait.h>
+#include <linux/fs_pin.h>
 
-struct proc_dir_entry *File;
-#define file_name "mymounts"
+char *file_name = "mymounts";
 
-static int __init misc_init(void)
+ssize_t read_proc(struct file *filp, char *buf, size_t len, loff_t *offp )
 {
-	struct proc_mounts *p = m->private;
-	struct mount *r = real_mount(mnt);
-	struct path mnt_path = { .dentry = mnt->mnt_root, .mnt = mnt };
-	struct super_block *sb = mnt_path.dentry->d_sb;
-	int err;
-
-	if (sb->s_op->show_devname) {
-		err = sb->s_op->show_devname(m, mnt_path.dentry);
-		if (err)
-			goto out;
-	} else {
-		mangle(m, r->mnt_devname ? r->mnt_devname : "none");
+	struct dentry *curdentry;
+	printk("root      %s", current->fs->root.mnt->mnt_root->d_name.name);
+	list_for_each_entry(curdentry, &current->fs->root.mnt->mnt_root->d_subdirs, d_child)
+	{
+		if ( curdentry->d_flags & DCACHE_MOUNTED)
+			printk("%s      /%s", curdentry->d_name.name, curdentry->d_name.name);
 	}
-	seq_putc(m, ' ');
-	/* mountpoints outside of chroot jail will give SEQ_SKIP on this */
-	err = seq_path_root(m, &mnt_path, &p->root, " \t\n\\");
-	if (err)
-		goto out;
-	seq_putc(m, ' ');
-	show_type(m, sb);
-	seq_puts(m, __mnt_is_readonly(mnt) ? " ro" : " rw");
-	err = show_sb_opts(m, sb);
-	if (err)
-		goto out;
-	show_mnt_opts(m, mnt);
-	if (sb->s_op->show_options)
-		err = sb->s_op->show_options(m, mnt_path.dentry);
-	seq_puts(m, " 0 0\n");
-out:
-	return err;
+	return 0;
 }
 
-static void __exit misc_exit(void)
+static int open_proc(struct inode *inode, struct file *file)
 {
+		return 0;
 }
 
-module_init(misc_init)
-module_exit(misc_exit)
+struct file_operations proc_fops = {
+	.read = read_proc,
+	.open = open_proc,
+};
+
+int proc_init(void)
+{
+	proc_create(file_name, 0, NULL, &proc_fops);
+	
+	return 0;
+}
+
+void proc_cleanup(void)
+{
+	remove_proc_entry(file_name, NULL);
+}
+
+module_init(proc_init);
+module_exit(proc_cleanup);
 
 MODULE_DESCRIPTION("Misc device driver");
 MODULE_AUTHOR("Kcowle");
